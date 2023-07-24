@@ -7,8 +7,9 @@
 #include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+
 #include "sdkconfig.h"
-#include "bluetooth_server.h"
+#include "ble_config.h"
 
 // I'm doing this so I can have the private helper functions at the end of the file
 void InitializeNonVolatileMemory(void);

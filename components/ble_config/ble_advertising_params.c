@@ -1,13 +1,9 @@
-#pragma once
-
 #include "esp_gap_ble_api.h"
-
-#define DEVICE_NAME "Router Controller"
 
 // This structure contains the data that is advertised to the client.
 // Calling esp_ble_gap_start_advertising() is making the device actually start advertising.
 // Documentation: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/bluetooth/esp_gap_ble.html
-static esp_ble_adv_params_t adv_params =
+esp_ble_adv_params_t ble_advertising_params =
 {
     // Minimum advertising interval for
     //       undirected
