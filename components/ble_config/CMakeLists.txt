@@ -3,6 +3,7 @@ idf_component_register(
         "ble_advertising_data.c"
         "ble_advertising_params.c"
         "ble_routercontroller_profile.c"
+        "ble_statemanager.c"
     INCLUDE_DIRS
         "include"
     REQUIRES bt

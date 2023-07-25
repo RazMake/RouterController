@@ -18,3 +18,7 @@ extern esp_ble_adv_params_t ble_advertising_params;
 
 // The application profile which contains all the router control operations
 extern struct ble_appprofile routercontroller_profile;
+
+void set_scanresponse_configured();
+void set_advertisingdata_configured();
+bool should_start_advertising();
