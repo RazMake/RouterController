@@ -3,6 +3,9 @@
 ///   It fills in the types required by the GATT server library.
 #include "ble_gatt_server_infra.h"
 
+/// @brief The name of the device, which will be present in the advertising data.
+const char *ble_device_name = "Router Controller";
+
 // The service UUID advertised by this device.
 // The array contains 16 bit or 32 bit UUID, but they are all represented as 16 bytes arrays.
 // Basically (https://stackoverflow.com/questions/36212020/how-can-i-convert-a-bluetooth-16-bit-service-uuid-into-a-128-bit-uuid):

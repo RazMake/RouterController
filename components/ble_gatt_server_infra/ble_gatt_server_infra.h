@@ -6,12 +6,14 @@
 #pragma once
 
 #include "esp_gap_ble_api.h"
+#include "gatt_profile_definition.h"
 
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_ADVERTISING                                                               ---
 // ---------------------------------------------------------------------------------------------
-extern uint8_t serviceUUIDsCount;
-extern uint8_t *advertised_serviceUUIDs;
+
+/// @brief The name of the device, which will be present in the advertising data.
+extern const char* ble_device_name;
 
 /// @brief The consumers of the infrastructure must set this variable to the desired advertising
 ///    parameters for the device.
@@ -30,6 +32,23 @@ extern esp_ble_adv_data_t ble_advertising_data;
 
 /// @brief This has to be set by the consumers of the library to define the scan response packet.
 extern esp_ble_adv_data_t ble_scan_response_data;
+
+// ---------------------------------------------------------------------------------------------
+// -- Section: BLE_GATT_PROFILES                                                             ---
+// ---------------------------------------------------------------------------------------------
+
+/// @brief The number of GATT profiles defined for this device.
+extern const uint8_t gatt_profiles_count;
+
+/// @brief The table containing all the GATT profiles supported by the device.
+///
+/// Note: This is defined as an array of pointers because I could not find a way to initialize it
+///   nicely with instaces of the structs defined in separate files (not inline).
+extern struct gatts_profile_definition *gatt_profiles_table[];
+
+// ---------------------------------------------------------------------------------------------
+// -- Section: BLE_SERVER_INITIALIZATION                                                     ---
+// ---------------------------------------------------------------------------------------------
 
 /// @brief This is called by the consumers of the library to initialize the server.
 void initialize_ble_gatt_server(void);

@@ -1,5 +1,11 @@
 idf_component_register(
-    SRCS "ble_advertising_configuration.c"
+    SRCS
+        "ble_advertising_configuration.c"
+        "gatt_profiles/router_controller_profile.c"
+        "gatt_profiles_configuration.c"
+    INCLUDE_DIRS
+        "."
+        "gatt_profiles/include"
     REQUIRES
         ble_gatt_server_infra
 )

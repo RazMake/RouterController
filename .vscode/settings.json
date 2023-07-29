@@ -5,7 +5,8 @@
     "*.excalidraw": "json",
     "*.excalidrawlib": "json",
     "ble_gatt_server_infra.h": "c",
-    "esp_gap_ble_api.h": "c"
+    "esp_gap_ble_api.h": "c",
+    "gatt_profile_definition.h": "c"
   },
   "idf.flashType": "UART"
 }
