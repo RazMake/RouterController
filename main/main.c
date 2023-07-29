@@ -1,22 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "ble_gatt_server_infra.h"
 
-#include "sdkconfig.h"
-#include "ble_device.h"
-
-// Helper function containing the code for initializing the NVS (non volatile storage)
-// The NVS is used by the bluetooth stack to preserver connection information, so it
-// survives restarts (otherwise we would have to go through the connect procedure on each restart).
-// Note: I did not create a component for this, since I don't have any other functionality than
-//    initializing the NVS at the moment.
-static void InitializeNonVolatileMemory(void)
+void app_main(void)
 {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) 
@@ -38,13 +24,6 @@ static void InitializeNonVolatileMemory(void)
     }
 
     ESP_ERROR_CHECK(ret);
-}
 
-// **************************************************************************************************
-// ** This is the entry point of the firmware. This executes when the device is powered on **********
-// **************************************************************************************************
-void app_main(void)
-{
-    InitializeNonVolatileMemory();
-    InitializeBleDevice();
+    initialize_ble_gatt_server();
 }
