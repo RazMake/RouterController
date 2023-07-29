@@ -1,11 +1,12 @@
 #include "ble_gatt_server_infra.h"
 #include "gap_event_handler.h"
+#include "gatt_event_handler.h"
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
 
-// Helper function for initializing the bluetooth BLE functionality of the device.
-void InitializeBleDevice(void)
+/// @brief This is called by the consumers of the library to initialize the server.
+void initialize_ble_gatt_server(void)
 {
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
     
@@ -15,7 +16,7 @@ void InitializeBleDevice(void)
     ESP_ERROR_CHECK(esp_bluedroid_init());
     ESP_ERROR_CHECK(esp_bluedroid_enable());
 
-    // ESP_ERROR_CHECK(esp_ble_gatts_register_callback(gatts_event_handler));
+    ESP_ERROR_CHECK(esp_ble_gatts_register_callback(gatt_event_handler));
     ESP_ERROR_CHECK(esp_ble_gap_register_callback(gap_event_handler));
 
     // ESP_ERROR_CHECK(esp_ble_gatts_app_register(PROFILE_A_APP_ID));

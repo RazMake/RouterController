@@ -3,10 +3,12 @@ idf_component_register(
         "ble_gatt_server_infra.c"
         "ble_advertising_infra/ble_advertising_infra.c"
         "gap_event_handler/gap_event_handler.c"
+        "gatt_event_handler/gatt_event_handler.c"
     INCLUDE_DIRS
         "."
         "ble_advertising_infra"
         "gap_event_handler"
+        "gatt_event_handler"
     REQUIRES
         bt
 )
