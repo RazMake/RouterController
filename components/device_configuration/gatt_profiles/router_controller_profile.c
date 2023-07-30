@@ -1,6 +1,7 @@
 /// @file router_controller_profile.c
 /// @brief This file contains the definition of the profile containing the router control commands.
 #include "router_controller_profile.h"
+#define COMPONENT_TAG "ROUTER_CTRL_PROFILE"
 
 /// @brief [PRIVATE] This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 /// @param event The received event.
@@ -10,6 +11,14 @@ static void router_controller_profile_handler(esp_gatts_cb_event_t event, esp_ga
 {
     switch(event)
     {
+        case ESP_GATTS_CONF_EVT:
+            ESP_LOGI(COMPONENT_TAG, "Confirmation received, status %d attr_handle %d", param->conf.status, param->conf.handle);
+            if (param->conf.status != ESP_GATT_OK)
+            {
+                esp_log_buffer_hex(COMPONENT_TAG, param->conf.value, param->conf.len);
+            }
+            break;
+
         default:
             break;
     }
@@ -212,7 +221,7 @@ struct gatts_profile_definition router_controller_profile =
     .gatts_if = ESP_GATT_IF_NONE,
     .service_id.is_primary = true,
     .service_id.id.uuid.len = ESP_UUID_LEN_16,
-    .service_id.id.uuid.uuid = { 0x0, 0x0, },
-    .profile_handles_count = 2,
+    .service_id.id.uuid.uuid = {0x46,0xc8,0x6f,0x95,0x71,0xda,0x48,0xf1,0xaa,0xc0,0x85,0xeb,0xe0,0x7e,0x4e,0x50},
+    .profile_handles_count = 4,
 };
 
