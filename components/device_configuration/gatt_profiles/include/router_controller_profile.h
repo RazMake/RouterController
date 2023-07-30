@@ -4,4 +4,4 @@
 #include "ble_gatt_server_infra.h"
 
 /// @brief This is the profile that contains the router controlls.
-extern struct gatts_profile_definition router_controller_profile;
+extern struct gatt_profile_definition router_controller_profile;

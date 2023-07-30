@@ -10,7 +10,7 @@
 ///
 /// The consumers of the library must crete a table with at least one record for one profile, for the device
 /// to accept connections over BLE.
-struct gatts_profile_definition
+struct gatt_profile_definition
 {
     /// @brief The callback method to be invoked to handle GATT events for for this specific profile.
     ///   This must be set when the profile is defined.

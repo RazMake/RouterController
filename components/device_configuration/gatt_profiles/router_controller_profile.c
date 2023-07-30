@@ -1,6 +1,7 @@
 /// @file router_controller_profile.c
 /// @brief This file contains the definition of the profile containing the router control commands.
 #include "router_controller_profile.h"
+#include "esp_log.h"
 #define COMPONENT_TAG "ROUTER_CTRL_PROFILE"
 
 /// @brief [PRIVATE] This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
@@ -215,7 +216,7 @@ static void router_controller_profile_handler(esp_gatts_cb_event_t event, esp_ga
 }
 
 /// @brief This is the profile that contains the router controls.
-struct gatts_profile_definition router_controller_profile =
+struct gatt_profile_definition router_controller_profile =
 {
     .gatt_event_handler = router_controller_profile_handler,
     .gatts_if = ESP_GATT_IF_NONE,

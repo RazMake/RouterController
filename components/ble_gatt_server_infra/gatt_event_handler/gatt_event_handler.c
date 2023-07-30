@@ -14,7 +14,6 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_
     switch(event)
     {
         case ESP_GATTS_REG_EVT:
-            // For register event, we need to store the "gatts_if" value for each profile so ??
             if (param->reg.status != ESP_GATT_OK)
             {
                 ESP_LOGE(COMPONENT_TAG, "Registration failed for profile %d. Status: %d", param->reg.app_id, param->reg.status);
@@ -23,13 +22,29 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_
 
             if (param->reg.app_id < 0 || param->reg.app_id >= gatt_profiles_count )
             {
-                ESP_LOGE(COMPONENT_TAG, "Registration failed. The profile Id (%d) is invalid", param->reg.app_id);
+                ESP_LOGE(COMPONENT_TAG, "Registration failed. The profile app_id (%d) is invalid", param->reg.app_id);
                 return;
             }
 
             gatt_profiles_table[param->reg.app_id]->gatts_if = gatts_if;
-            esp_ble_gatts_create_service(gatts_if, &(gatt_profiles_table[param->reg.app_id]->service_id), gatt_profiles_table[param->reg.app_id]->profile_handles_count);
+            ESP_LOGI(
+                COMPONENT_TAG,
+                "Profile %d, associated with 'gatts_if' %d. Creating the service for this profile, requesting %d handles.",
+                param->reg.app_id,
+                gatts_if,
+                gatt_profiles_table[param->reg.app_id]->profile_handles_count);
+            // esp_ble_gatts_create_service(gatts_if, &(gatt_profiles_table[param->reg.app_id]->service_id), gatt_profiles_table[param->reg.app_id]->profile_handles_count);
             return;
+
+        case ESP_GATTS_CREATE_EVT:
+            // ESP_LOGI(COMPONENT_TAG, "Created service %d. Status: %d, Service Id: %d", param->create.service_handle, param->create.status, param->create.service_id.id.uuid);
+            // struct gatt_profile_definition* profile = select_profile_by_gatts_if(gatts_if);
+            // if (profile->create_characteristics)
+            // {
+            //     profile->create_characteristics(param->create);
+            // }
+
+            break;
 
         case ESP_GATTS_DISCONNECT_EVT:
             ESP_LOGI(COMPONENT_TAG, "Device disconnect reason 0x%x. Restarting advertising", param->disconnect.reason);

@@ -6,7 +6,8 @@
     "*.excalidrawlib": "json",
     "ble_gatt_server_infra.h": "c",
     "esp_gap_ble_api.h": "c",
-    "gatt_profile_definition.h": "c"
+    "gatt_profile_definition.h": "c",
+    "router_controller_profile.h": "c"
   },
   "idf.flashType": "UART"
 }

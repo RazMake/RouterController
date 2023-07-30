@@ -4,6 +4,8 @@
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_gatt_common_api.h"
+#include "esp_log.h"
+#define COMPONENT_TAG "GATT_SERVER"
 
 /// @brief This is called by the consumers of the library to initialize the server.
 void initialize_ble_gatt_server(void)
@@ -28,4 +30,21 @@ void initialize_ble_gatt_server(void)
 
     // Set the advertising data, so the device starts advertising:
     set_advertising_data_and_scan_response(&ble_advertising_data, &ble_scan_response_data);
+}
+
+/// @brief This method selects (from the gatt_profile_table) the profile matching the specified gatts_if value.
+/// @param gatts_id The value provided by the infrastructure to identify which profile is the event for.
+/// @return The profile definition that matches the specified 'gatts_if' or NULL if nothing matched.
+struct gatt_profile_definition* select_profile_by_gatts_if(esp_gatt_if_t gatts_if)
+{
+    for (int i = 0; i < gatt_profiles_count; i++)
+    {
+        if (gatt_profiles_table[i]->gatts_if == gatts_if)
+        {
+            return gatt_profiles_table[i];
+        }
+    }
+
+    ESP_LOGE(COMPONENT_TAG, "No profile matched 'gatts_if' %d", gatts_if);
+    return NULL;
 }
