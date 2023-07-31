@@ -46,10 +46,11 @@ extern const uint8_t gatt_profiles_count;
 ///   nicely with instaces of the structs defined in separate files (not inline).
 extern struct gatt_profile_definition *gatt_profiles_table[];
 
-/// @brief This method selects (from the gatt_profile_table) the profile matching the specified gatts_if value.
-/// @param gatts_id The value provided by the infrastructure to identify which profile is the event for.
+/// @brief This method selects (from the gatt_profile_table) the profile matching the specified profile_selector value,
+///   wich is assigned when event ESP_GATTS_REG_EVT is handled (in the gatt_event_handler method).
+/// @param profile_selector The value provided by the infrastructure to identify which profile is an event for.
 /// @return The profile definition that matches the specified 'gatts_if' or NULL if nothing matched.
-struct gatt_profile_definition* select_profile_by_gatts_if(esp_gatt_if_t gatts_if);
+struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_selector);
 
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_SERVER_INITIALIZATION                                                     ---

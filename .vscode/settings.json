@@ -9,5 +9,6 @@
     "gatt_profile_definition.h": "c",
     "router_controller_profile.h": "c"
   },
-  "idf.flashType": "UART"
+  "idf.flashType": "UART",
+  "idf.portWin": "COM4"
 }

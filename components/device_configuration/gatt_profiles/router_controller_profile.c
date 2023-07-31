@@ -1,8 +1,24 @@
 /// @file router_controller_profile.c
 /// @brief This file contains the definition of the profile containing the router control commands.
 #include "router_controller_profile.h"
+#include "esp_bt_defs.h"
 #include "esp_log.h"
 #define COMPONENT_TAG "ROUTER_CTRL_PROFILE"
+
+static uint16_t router_location = 4321;
+
+static const esp_bt_uuid_t router_height_characteristic =
+{
+    .len = ESP_UUID_LEN_16,
+    .uuid = { .uuid16 = 0xFF01, },
+};
+
+static const esp_attr_value_t router_height_characteristic_number =
+{
+    .attr_max_len = sizeof(uint16_t),
+    .attr_len     = sizeof(uint16_t),
+    .attr_value   = &router_location,
+};
 
 /// @brief [PRIVATE] This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 /// @param event The received event.
@@ -215,11 +231,29 @@ static void router_controller_profile_handler(esp_gatts_cb_event_t event, esp_ga
     */
 }
 
+/// @brief [PRIVATE] This method creates the profile characteristics.
+/// @param service_handle The ESP infrastructure assigned handle for the service supporting the profile.
+///          This is needed for adding the characteristic(s).
+static void create_router_controller_profile_characteristics(uint16_t service_handle)
+{
+    // Add the characteristic for getting current router height
+    ESP_ERROR_CHECK(esp_ble_gatts_add_char(
+        service_handle,
+        &router_height_characteristic,
+        ESP_GATT_PERM_READ,
+        ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_NOTIFY,
+        &router_height_characteristic_number
+        ,
+        NULL));
+    ESP_LOGI(COMPONENT_TAG, "Characteristic router_height added");
+}
+
 /// @brief This is the profile that contains the router controls.
 struct gatt_profile_definition router_controller_profile =
 {
     .gatt_event_handler = router_controller_profile_handler,
-    .gatts_if = ESP_GATT_IF_NONE,
+    .create_profile_characteristics = create_router_controller_profile_characteristics,
+    .profile_selector = ESP_GATT_IF_NONE,
     .service_id.is_primary = true,
     .service_id.id.uuid.len = ESP_UUID_LEN_16,
     .service_id.id.uuid.uuid = {0x46,0xc8,0x6f,0x95,0x71,0xda,0x48,0xf1,0xaa,0xc0,0x85,0xeb,0xe0,0x7e,0x4e,0x50},

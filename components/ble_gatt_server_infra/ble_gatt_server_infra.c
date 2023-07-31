@@ -33,18 +33,18 @@ void initialize_ble_gatt_server(void)
 }
 
 /// @brief This method selects (from the gatt_profile_table) the profile matching the specified gatts_if value.
-/// @param gatts_id The value provided by the infrastructure to identify which profile is the event for.
+/// @param profile_selector The value provided by the infrastructure to identify which profile is an event for.
 /// @return The profile definition that matches the specified 'gatts_if' or NULL if nothing matched.
-struct gatt_profile_definition* select_profile_by_gatts_if(esp_gatt_if_t gatts_if)
+struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_selector)
 {
     for (int i = 0; i < gatt_profiles_count; i++)
     {
-        if (gatt_profiles_table[i]->gatts_if == gatts_if)
+        if (gatt_profiles_table[i]->profile_selector == profile_selector)
         {
             return gatt_profiles_table[i];
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "No profile matched 'gatts_if' %d", gatts_if);
+    ESP_LOGE(COMPONENT_TAG, "No profile matched 'profile_selector' %d", profile_selector);
     return NULL;
 }
