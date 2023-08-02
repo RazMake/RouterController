@@ -5,21 +5,29 @@
 ///       It is included automatically with ble_gatt_server_infra.h (which defines the library contracts).
 #pragma once
 #include "esp_gatts_api.h"
+#include "gatt_characteristic_definition.h"
 
 /// @brief The callback signature for the method that creates the profile characteristics. All profiles must provide one.
-/// @param service_handle The ESP infrastructure assigned handle for the service supporting the profile.
-///          This is needed for adding the characteristic(s).
-typedef void (* create_profile_characteristics_t)(uint16_t service_handle);
+/// @param event The event to be handled. This drives which part of the param structure contains the interesting data.
+/// @param param The parameters corresponding to the event.
+typedef void (* gatts_profile_handler_t)(esp_gatts_cb_event_t event, esp_ble_gatts_cb_param_t *param);
 
 /// @brief This type encapsulates the information needed for performing the work for a single GATT profile.
 ///
 /// The consumers of the library must crete a table with at least one record for one profile, for the device
 /// to accept connections over BLE.
 struct gatt_profile_definition
-{
-    /// @brief The callback method to be invoked to handle GATT events for for this specific profile.
-    ///   This must be set when the profile is defined.
-    esp_gatts_cb_t gatt_event_handler;
+ {
+    /// @brief This is a unique identifier of the profile.
+    ///    This is needed when registering the profile (aka. service).
+    ///
+    /// Example of 16 bit UUID                   |   Example of 32 bit UUID                        |   Example of 128 bit UUID
+    ///  .id =                                   |     .id =                                       |     .id =
+	///      {                                   |         {                                       |         {
+    ///        .len = ESP_UUID_LEN_16,           |            .len = ESP_UUID_LEN_32,              |            .len = ESP_UUID_LEN_128,
+    ///        .uuid = { .uuid16 = 0xFF01, },    |            .uuid = { .uuid32 = 0xFFFFFF01, },   |            .uuid = { .uuid128 = {0x18,0x04,0x09,0xcc,0xbb,0x5b,0x4e,0x2e,0xbe,0xb1,0x0e,0x7e,0x9a,0x14,0x29,0x99} },
+    ///      };                                  |         };                                      |         };
+    esp_bt_uuid_t id;
 
     /// @brief This is an identifier associated by the ESP infrastructure with this profile when it is registered
     ///    on the device. It is going to be used in the generic GATT event handler to determine which profile is
@@ -28,20 +36,10 @@ struct gatt_profile_definition
     ///    This should be initialized with ESP_GATT_IF_NONE value when de profile is defined.
     uint16_t profile_selector;
 
-    /// @brief Each profile must declare the number of handles it will need in total.
-    ///   Service handle, characteristic handles, characteristic value handles, characteristic descriptor handles
-    uint16_t profile_handles_count;  
+    /// @brief The callback method to be invoked to handle GATT events for for this specific profile.
+    ///   This must be set when the profile is defined.
+    gatts_profile_handler_t gatt_event_handler;
 
-    /// @brief This defines the service Id.
-    ///    It has two properties:
-    ///       - is_primary: This indicates if this is a primary service (or a sub-service of a primary one)
-    ///       - id: This is the actual identity of the service that serves this profile. It has two properties:
-    ///            - uuid.uuid: The identity of the service (which is a UUID)
-    ///            - uuid.len: The size of the UUID (use: ESP_UUID_LEN_16)
-    ///    Note: There are some other properties of the id, bu they don't matter.
-    esp_gatt_srvc_id_t service_id;
-
-    /// @brief This delegate is invoked by the generic GATT event handler (for ESP_GATTS_CREATE_EVT event) to
-    ///    allow this profile to create its characteristics.
-    create_profile_characteristics_t create_profile_characteristics;
+    /// @brief This defines the list of characteristics for this profile.
+    struct gatt_characteristic_definition* characteristics_table[];
 };

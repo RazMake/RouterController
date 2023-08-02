@@ -31,14 +31,14 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_select
                 return;
             }
 
-            gatt_profiles_table[param->reg.app_id]->profile_selector = profile_selector;
-            ESP_LOGI(
-                COMPONENT_TAG,
-                "Profile %d, associated with 'profile_selector' %d. Creating the service for this profile, requesting %d handles.",
-                param->reg.app_id,
-                profile_selector,
-                gatt_profiles_table[param->reg.app_id]->profile_handles_count);
-             esp_ble_gatts_create_service(profile_selector, &(gatt_profiles_table[param->reg.app_id]->service_id), gatt_profiles_table[param->reg.app_id]->profile_handles_count);
+            // gatt_profiles_table[param->reg.app_id]->profile_selector = profile_selector;
+            // ESP_LOGI(
+            //     COMPONENT_TAG,
+            //     "Profile %d, associated with 'profile_selector' %d. Creating the service for this profile, requesting %d handles.",
+            //     param->reg.app_id,
+            //     profile_selector,
+            //     gatt_profiles_table[param->reg.app_id]->profile_handles_count);
+            //  esp_ble_gatts_create_service(profile_selector, &(gatt_profiles_table[param->reg.app_id]->service_id), gatt_profiles_table[param->reg.app_id]->profile_handles_count);
             return;
 
         // This event is fired once the ESP infrastructure finishes creating the service corresponding to a profile.
@@ -51,20 +51,20 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_select
             }
 
             ESP_LOGI(COMPONENT_TAG, "Service creation succeeded for profile_selector %d. Status: %d", profile_selector, param->create.status);
-            struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
-            ESP_ERROR_CHECK_WITHOUT_ABORT(esp_ble_gatts_start_service(param->create.service_handle));
+            // struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+            // ESP_ERROR_CHECK_WITHOUT_ABORT(esp_ble_gatts_start_service(param->create.service_handle));
 
-            if (profile)
-            {
-                if (profile->create_profile_characteristics)
-                {
-                    profile->create_profile_characteristics(param->create.service_handle);
-                }
-                else
-                {
-                    ESP_LOGE(COMPONENT_TAG, "Profile with profile_selector=%d does not have the create_profile_characteristics callback set", profile_selector);
-                }
-            }
+            // if (profile)
+            // {
+            //     if (profile->create_profile_characteristics)
+            //     {
+            //         profile->create_profile_characteristics(param->create.service_handle);
+            //     }
+            //     else
+            //     {
+            //         ESP_LOGE(COMPONENT_TAG, "Profile with profile_selector=%d does not have the create_profile_characteristics callback set", profile_selector);
+            //     }
+            // }
             return;
 
         // This event is fired when the "central device" (phone, computer, etc.) disconnects from this device:
@@ -94,7 +94,7 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_select
         {
             if (gatt_profiles_table[i]->gatt_event_handler)
             {
-                gatt_profiles_table[i]->gatt_event_handler(event, profile_selector, param);
+                gatt_profiles_table[i]->gatt_event_handler(event, param);
             }
             else
             {
