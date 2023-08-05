@@ -8,6 +8,7 @@
 #include "esp_gap_ble_api.h"
 #include "gatt_profile_definition.h"
 #include "gatt_characteristic_definition.h"
+#include "gatt_characteristic_descriptor_definition.h"
 
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_ADVERTISING                                                               ---
@@ -53,12 +54,11 @@ extern struct gatt_profile_definition *gatt_profiles_table[];
 /// @return The profile definition that matches the specified 'gatts_if' or NULL if nothing matched.
 struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_selector);
 
-/// @brief This method selects the characteristic from a profile matching the specified characteristic_selector value,
-///   which is assigned when event ESP_GATTS_REG_CHAR_EVT is hadled (in the gatt_event_handler method).
-/// @param profile_selector The value provided by the infrastructure to identify which profile is an event for.
-/// @param characteristic_selector The value provided by the infrastructure to identify which characteristic is an event for.
-/// @return The characteristic definition that matches the specified selector values.
-struct gett_characteristic_definition get_characteristic_by_selector(esp_gatt_if_t profile_selector, uint16_t characteristic_selector);
+/// @brief This method selects the characteristic from a profile matching the specified UUID,
+/// @param profile The profile whose characteristic we're looking up.
+/// @param target_chararacteristic_uuid The UUID of the characteristic to find and return.
+/// @return The characteristic definition that matches the specified UUID values.
+struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_profile_definition* profile, esp_bt_uuid_t target_characteristic_uuid);
 
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_SERVER_INITIALIZATION                                                     ---

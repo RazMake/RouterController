@@ -36,9 +36,23 @@ struct gatt_profile_definition
     ///    This should be initialized with ESP_GATT_IF_NONE value when de profile is defined.
     uint16_t profile_selector;
 
+    /// @brief This is the index in the profiles table where this profile has been added.
+    ///
+    /// This is set by the infrastructure when the profile registration succeeds
+    /// (which means the users do not need to wory about setting it, and can rely on it to have the right value after the profile is initialized).
+    uint16_t index;
+
+    /// @brief The handle given by the ESP infrastructure to this specific profile.
+    ///
+    /// This is set by the infrastructure when the service backing the profile is created (in ESP_GATTS_CREATE_EVT).
+    uint16_t handle;
+
     /// @brief The callback method to be invoked to handle GATT events for for this specific profile.
     ///   This must be set when the profile is defined.
     gatts_profile_handler_t gatt_event_handler;
+
+    /// @brief This keeps the count of characteristics in this profile.
+    uint8_t characteristics_count;
 
     /// @brief This defines the list of characteristics for this profile.
     struct gatt_characteristic_definition* characteristics_table[];

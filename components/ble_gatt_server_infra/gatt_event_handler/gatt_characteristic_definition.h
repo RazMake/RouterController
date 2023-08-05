@@ -1,5 +1,5 @@
 /// @file gatt_characteristic_definition.h
-/// @brief The type definition for a GATT profile
+/// @brief The type definition for a GATT profile characteristic (essentially the attributes container within a profile)
 ///
 ///   [PRIVATE] This is not intended to be included directly, but it can, it contains public types.
 ///       It is included automatically with ble_gatt_server_infra.h (which defines the library contracts).
@@ -18,4 +18,47 @@ struct gatt_characteristic_definition
     ///        .uuid = { .uuid16 = 0xFF01, },    |            .uuid = { .uuid32 = 0xFFFFFF01, },   |            .uuid = { .uuid128 = {0x18,0x04,0x09,0xcc,0xbb,0x5b,0x4e,0x2e,0xbe,0xb1,0x0e,0x7e,0x9a,0x14,0x29,0x99} },
     ///      };                                  |         };                                      |         };
     esp_bt_uuid_t id;
+
+    /// @brief The handle given by the ESP infrastructure to this specific characteristic.
+    ///
+    /// This is set by the infrastructure when the service backing the profile is created (in ESP_GATTS_ADD_CHAR_EVT).
+    uint16_t handle;
+
+    /// @brief The characteristic properties:
+    ///   The value can be a combination of the following:
+    ///      ESP_GATT_CHAR_PROP_BIT_BROADCAST
+    ///      ESP_GATT_CHAR_PROP_BIT_READ
+    ///      ESP_GATT_CHAR_PROP_BIT_WRITE_NR
+    ///      ESP_GATT_CHAR_PROP_BIT_WRITE
+    ///      ESP_GATT_CHAR_PROP_BIT_NOTIFY
+    ///      ESP_GATT_CHAR_PROP_BIT_INDICATE
+    ///      ESP_GATT_CHAR_PROP_BIT_AUTH
+    ///      ESP_GATT_CHAR_PROP_BIT_EXT_PROP
+    esp_gatt_char_prop_t properties;
+
+    /// @brief The caracteristic permissions. Should match the properties.
+    ///   The value can be a combination of the following:
+    ///      ESP_GATT_PERM_READ
+    ///      ESP_GATT_PERM_READ_ENCRYPTED
+    ///      ESP_GATT_PERM_READ_ENC_MITM
+    ///      ESP_GATT_PERM_WRITE
+    ///      ESP_GATT_PERM_WRITE_ENCRYPTED
+    ///      ESP_GATT_PERM_WRITE_ENC_MITM
+    ///      ESP_GATT_PERM_WRITE_SIGNED
+    ///      ESP_GATT_PERM_WRITE_SIGNED_MITM
+    ///      ESP_GATT_PERM_READ_AUTHORIZATION
+    ///      ESP_GATT_PERM_WRITE_AUTHORIZATION
+    ///      ESP_GATT_PERM_ENCRYPT_KEY_SIZE(keysize)
+    esp_gatt_perm_t permissions;
+
+    /// @brief The value of the characteristic.
+    esp_attr_value_t value;
+
+    /// @brief This is the number of descriptors of this characterstic.
+    ///   The characteristic can have 0 or more descriptors.
+    uint16_t descriptors_count;
+
+    /// @brief This is the table of descriptors of this characteristic.
+    ///   The characteristic can have 0 or more descriptors.
+    struct gatt_characteristic_descriptor* descriptors_table[];
 };

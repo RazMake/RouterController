@@ -8,6 +8,7 @@
 
 /// @brief This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 /// @param event The received event.
-/// @param gatts_if ??
+/// @param profile_selector A value assigned by the infrastructure to to a user defined profile, which is used to
+///   identify the profile an event is targeted at.
 /// @param param The parameters of the received event. This structure has a different field for each type of event.
-void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
+void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_selector, esp_ble_gatts_cb_param_t *param);

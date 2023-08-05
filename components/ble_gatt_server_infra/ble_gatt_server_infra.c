@@ -48,3 +48,50 @@ struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_se
     ESP_LOGE(COMPONENT_TAG, "No profile matched 'profile_selector' %d", profile_selector);
     return NULL;
 }
+
+/// @brief This method selects the characteristic from a profile matching the specified UUID,
+/// @param profile The profile whose characteristic we're looking up.
+/// @param target_chararacteristic_uuid The UUID of the characteristic to find and return.
+/// @return The characteristic definition that matches the specified UUID values.
+struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_profile_definition* profile, esp_bt_uuid_t target_characteristic_uuid)
+{
+    struct gatt_characteristic_definition* profile_characteristic;
+    for (int c = 0; c < profile->characteristics_count; c++)
+    {
+        profile_characteristic = profile->characteristics_table[c];
+        if (profile_characteristic->id.len != target_characteristic_uuid.len)
+        {
+            continue;
+        }
+
+        bool characteristic_found = true;
+        switch(target_characteristic_uuid.len)
+        {
+            case ESP_UUID_LEN_16: characteristic_found = profile_characteristic->id.uuid.uuid16 == target_characteristic_uuid.uuid.uuid16; break;
+            case ESP_UUID_LEN_32: characteristic_found = profile_characteristic->id.uuid.uuid32 == target_characteristic_uuid.uuid.uuid32; break;
+            case ESP_UUID_LEN_128:
+                for (int i=0; i<target_characteristic_uuid.len; i++)
+                {
+                    if (profile_characteristic->id.uuid.uuid128[i] != target_characteristic_uuid.uuid.uuid128[i])
+                    {
+                        characteristic_found = false;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                ESP_LOGI(COMPONENT_TAG, "Unexpected UUID length encountered: %d", target_characteristic_uuid.len);
+                characteristic_found = false;
+                break;
+        }
+
+        if (characteristic_found)
+        {
+            return profile_characteristic;
+        }
+    }
+
+    ESP_LOGE(COMPONENT_TAG, "Characteristic was found in profile '%d'", profile->profile_selector);
+    return NULL;
+}

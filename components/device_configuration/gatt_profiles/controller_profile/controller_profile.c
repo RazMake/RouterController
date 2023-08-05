@@ -239,6 +239,7 @@ struct gatt_profile_definition controller_profile =
         },
     .gatt_event_handler = router_controller_profile_handler,
     .profile_selector = ESP_GATT_IF_NONE,
+    .characteristics_count = 1,
     .characteristics_table =
         {
             &height_characteristic,
