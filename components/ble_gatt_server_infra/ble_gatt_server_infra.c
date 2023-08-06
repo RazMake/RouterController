@@ -45,14 +45,14 @@ struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_se
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "No profile matched 'profile_selector' %d", profile_selector);
+    ESP_LOGE(COMPONENT_TAG, "No profile found with profile_selector=%d", profile_selector);
     return NULL;
 }
 
 /// @brief This method selects the characteristic from a profile matching the specified UUID,
 /// @param profile The profile whose characteristic we're looking up.
 /// @param target_chararacteristic_uuid The UUID of the characteristic to find and return.
-/// @return The characteristic definition that matches the specified UUID values.
+/// @return The characteristic definition that matches the specified UUID value, or NULL if none matched.
 struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_profile_definition* profile, esp_bt_uuid_t target_characteristic_uuid)
 {
     struct gatt_characteristic_definition* profile_characteristic;
@@ -81,7 +81,11 @@ struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_pr
                 break;
 
             default:
-                ESP_LOGI(COMPONENT_TAG, "Unexpected UUID length encountered: %d", target_characteristic_uuid.len);
+                ESP_LOGI(
+                    COMPONENT_TAG,
+                    "Characteristic with unexpected UUID length (%d) looked up in profile with index=%d",
+                    target_characteristic_uuid.len,
+                    profile->index);
                 characteristic_found = false;
                 break;
         }
@@ -92,7 +96,7 @@ struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_pr
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "Characteristic was found in profile '%d'", profile->profile_selector);
+    ESP_LOGE(COMPONENT_TAG, "No characteristic found with the specified UUID in profile with index=%d", profile->index);
     return NULL;
 }
 
@@ -112,6 +116,58 @@ struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "Characteristic was found in profile '%d', with handle %d", profile->profile_selector, target_characteristic_handle);
+    ESP_LOGE(COMPONENT_TAG, "No characteristic with handle=%d was found in profile with index=%d", target_characteristic_handle, profile->index);
+    return NULL;
+}
+
+/// @brief This method selects the descriptor with the specified UUID from the given characteristic.
+/// @param characteristic The characteristic whose descriptors we're looking up.
+/// @param target_descriptor_uuid The handle of the descriptor to find and return.
+/// @return The descriptor definition that matches the specified UUID value.
+struct gatt_characteristic_descriptor_definition* get_descriptor_by_uuid(struct gatt_characteristic_definition* characteristic, esp_bt_uuid_t target_descriptor_uuid)
+{
+    struct gatt_characteristic_descriptor_definition* descriptor;
+    for (int d = 0; d < characteristic->descriptors_count; d++)
+    {
+        descriptor = characteristic->descriptors_table[d];
+        if (descriptor->id.len != target_descriptor_uuid.len)
+        {
+            continue;
+        }
+
+        bool descriptor_found = true;
+        switch(target_descriptor_uuid.len)
+        {
+            case ESP_UUID_LEN_16: descriptor_found = descriptor->id.uuid.uuid16 == target_descriptor_uuid.uuid.uuid16; break;
+            case ESP_UUID_LEN_32: descriptor_found = descriptor->id.uuid.uuid32 == target_descriptor_uuid.uuid.uuid32; break;
+            case ESP_UUID_LEN_128:
+                for (int i=0; i<target_descriptor_uuid.len; i++)
+                {
+                    if (descriptor->id.uuid.uuid128[i] != target_descriptor_uuid.uuid.uuid128[i])
+                    {
+                        descriptor_found = false;
+                        break;
+                    }
+                }
+                break;
+
+            default:
+                ESP_LOGI(
+                    COMPONENT_TAG,
+                    "Descriptor with unexpected UUID length (%d) looked up in characteristic with index=%d from profile with index=%d",
+                    target_descriptor_uuid.len,
+                    characteristic->index,
+                    characteristic->profile_index);
+                descriptor_found = false;
+                break;
+        }
+
+        if (descriptor_found)
+        {
+            return descriptor;
+        }
+    }
+
+    ESP_LOGE(COMPONENT_TAG, "No descriptor was found with the specified UUID in characteristic with index=%d, from profile with index=%d", characteristic->index, characteristic->profile_index);
     return NULL;
 }

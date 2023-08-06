@@ -10,7 +10,9 @@
     "router_controller_profile.h": "c",
     "type_traits": "c",
     "esp_bt_main.h": "c",
-    "esp_bt.h": "c"
+    "esp_bt.h": "c",
+    "gatt_event_handler.h": "c",
+    "gatt_characteristic_descriptor_definition.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4"

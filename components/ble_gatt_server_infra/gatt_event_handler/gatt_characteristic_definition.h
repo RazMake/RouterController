@@ -19,6 +19,18 @@ struct gatt_characteristic_definition
     ///      };                                  |         };                                      |         };
     esp_bt_uuid_t id;
 
+    /// @brief This is the index in the characteristics table of the profile.
+    ///
+    /// This is set by the infrastructure when the characteristic registration succeeds
+    /// (which means the users do not need to wory about setting it, and can rely on it to have the right value after the profile is initialized).
+    uint16_t index;
+
+    /// @brief This is the index of the profile that owns this characteristic.
+    ///
+    /// This is set by the infrastructure when the characteristic registration succeeds
+    /// (which means the users do not need to wory about setting it, and can rely on it to have the right value after the profile is initialized).
+    uint16_t profile_index;
+
     /// @brief The handle given by the ESP infrastructure to this specific characteristic.
     ///
     /// This is set by the infrastructure when the service backing the profile is created (in ESP_GATTS_ADD_CHAR_EVT).
@@ -58,7 +70,12 @@ struct gatt_characteristic_definition
     ///   The characteristic can have 0 or more descriptors.
     uint16_t descriptors_count;
 
+    /// @brief This is a flag indicating whether wether we started adding the descriptors of this charateristic or not.
+    ///   Once we start adding the descriptors, we can tell which one was added and which one was not by whih one has
+    ///   it's handle property set or not.
+    bool descriptors_adding_started;
+
     /// @brief This is the table of descriptors of this characteristic.
     ///   The characteristic can have 0 or more descriptors.
-    struct gatt_characteristic_descriptor* descriptors_table[];
+    struct gatt_characteristic_descriptor_definition* descriptors_table[];
 };

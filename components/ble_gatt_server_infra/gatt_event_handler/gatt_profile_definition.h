@@ -45,7 +45,7 @@ struct gatt_profile_definition
     /// @brief The handle given by the ESP infrastructure to this specific profile.
     ///
     /// This is set by the infrastructure when the service backing the profile is created (in ESP_GATTS_CREATE_EVT).
-    uint16_t handle;
+    uint16_t service_handle;
 
     /// @brief The callback method to be invoked to handle GATT events for for this specific profile.
     ///   This must be set when the profile is defined.
