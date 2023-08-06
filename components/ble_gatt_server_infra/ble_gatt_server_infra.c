@@ -95,3 +95,23 @@ struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_pr
     ESP_LOGE(COMPONENT_TAG, "Characteristic was found in profile '%d'", profile->profile_selector);
     return NULL;
 }
+
+/// @brief This method selects the characteristic from a profile matching the specified characteristic handle (assigned by the ESP infrastructure),
+/// @param profile The profile whose characteristic we're looking up.
+/// @param target_characteristic_handle The handle of the characteristic to find and return.
+/// @return The characteristic definition that matches the specified UUID values.
+struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_profile_definition* profile, uint16_t target_characteristic_handle)
+{
+    struct gatt_characteristic_definition* profile_characteristic;
+    for (int c = 0; c < profile->characteristics_count; c++)
+    {
+        profile_characteristic = profile->characteristics_table[c];
+        if (profile_characteristic->handle == target_characteristic_handle)
+        {
+            return profile_characteristic;
+        }
+    }
+
+    ESP_LOGE(COMPONENT_TAG, "Characteristic was found in profile '%d', with handle %d", profile->profile_selector, target_characteristic_handle);
+    return NULL;
+}

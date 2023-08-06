@@ -60,6 +60,12 @@ struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_se
 /// @return The characteristic definition that matches the specified UUID values.
 struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_profile_definition* profile, esp_bt_uuid_t target_characteristic_uuid);
 
+/// @brief This method selects the characteristic from a profile matching the specified characteristic handle (assigned by the ESP infrastructure),
+/// @param profile The profile whose characteristic we're looking up.
+/// @param target_characteristic_handle The handle of the characteristic to find and return.
+/// @return The characteristic definition that matches the specified UUID values.
+struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_profile_definition* profile, uint16_t target_characteristic_handle);
+
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_SERVER_INITIALIZATION                                                     ---
 // ---------------------------------------------------------------------------------------------

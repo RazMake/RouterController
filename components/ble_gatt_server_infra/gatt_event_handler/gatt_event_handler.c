@@ -1,5 +1,6 @@
 /// @file gap_event_handler.c
 /// @brief The implementation of the callback invoked by the ESP infrastructure for all GAP events.
+#include <string.h>
 #include "gatt_event_handler.h"
 #include "esp_log.h"
 #define COMPONENT_TAG "GATT_EVENT_HANDLER"
@@ -168,6 +169,39 @@ static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gat
     characteristic->handle = param.attr_handle;
 }
 
+/// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_READ_EVT (the connected devices wants to read the respective
+///    characteristic value)
+/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
+/// @param param The parameters of the received event.
+static void on_characteristic_value_read(esp_gatt_if_t profile_selector, struct gatts_read_evt_param param)
+{
+    ESP_LOGI(
+        COMPONENT_TAG,
+        "Characteristic being read (conn_id %d, trans_id %" PRIu32 ", handle %d",
+        param.conn_id,
+        param.trans_id,
+        param.handle);
+
+    struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+    if (!profile)
+    {
+        return;
+    }
+
+    struct gatt_characteristic_definition* characteristic = get_characteristic_by_handle(profile, param.handle);
+    esp_gatt_rsp_t response;
+    memset(&response, 0, sizeof(esp_gatt_rsp_t));
+
+    response.handle = characteristic->handle,
+    response.attr_value.len = characteristic->value.attr_len;
+    for (int i=0; i<characteristic->value.attr_len; i++)
+    {
+        response.attr_value.value[i] = characteristic->value.attr_value[i];
+    }
+
+    esp_ble_gatts_send_response(profile_selector, param.conn_id, param.trans_id, ESP_GATT_OK, &response);
+}
+
 /// @brief This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 ///    This performs the common tasks (which do not depend on a specific profile, or apply to all profiles)
 /// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
@@ -181,6 +215,7 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_select
         case ESP_GATTS_DISCONNECT_EVT: on_central_device_disconnected(profile_selector, param->disconnect); return;
         case ESP_GATTS_CONF_EVT: on_indicate_sent(profile_selector, param->conf); return;
         case ESP_GATTS_ADD_CHAR_EVT: on_characteristic_created(profile_selector, param->add_char); return;
+        case ESP_GATTS_READ_EVT: on_characteristic_value_read(profile_selector, param->read); return;
         default: break;
     }
  
