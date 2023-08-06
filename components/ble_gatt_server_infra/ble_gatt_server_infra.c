@@ -116,7 +116,7 @@ struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "No characteristic with handle=%d was found in profile with index=%d", target_characteristic_handle, profile->index);
+    ESP_LOGE(COMPONENT_TAG, "No characteristic with handle=0x%x was found in profile with index=%d", target_characteristic_handle, profile->index);
     return NULL;
 }
 

@@ -5,6 +5,7 @@
 #include "esp_log.h"
 #define COMPONENT_TAG "GATT_EVENT_HANDLER"
 
+// ------------------------------ Helper functions ----------------------------------------------------------------------------------------------------------------------
 /// @brief This is a method that counts the handles needed for this profile.
 /// @param profile A pointer to the profile whose handles to count.
 /// @returns The calculated number of handles needed by this profile.
@@ -95,7 +96,7 @@ static struct gatt_characteristic_definition* get_characteristic_with_incomplete
 {
     for (int c=0; c<profile->characteristics_count; c++)
     {
-        if (has_characteristic_complete_descriptor_registration(profile->characteristics_table[c]))
+        if (!has_characteristic_complete_descriptor_registration(profile->characteristics_table[c]))
         {
             return profile->characteristics_table[c];
         }
@@ -104,31 +105,7 @@ static struct gatt_characteristic_definition* get_characteristic_with_incomplete
     return NULL;
 }
 
-/// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_DISCONNECT_EVT (the central device disconnected).
-/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
-/// @param param The parameters of the received event.
-static void on_central_device_disconnected(esp_gatt_if_t profile_selector, struct gatts_disconnect_evt_param param)
-{
-    ESP_LOGI(COMPONENT_TAG, "Device disconnect reason 0x%x. Restarting advertising", param.reason);
-    esp_ble_gap_start_advertising(&ble_advertising_parameters);
-}
-
-/// @brief This method is called when ESP infrastructure to indicate the success or failure of a call to esp_ble_gatts_send_indicate(..)
-///   if the call was made with need_confirm = false, this event will be called immediately and show the success or failure of the send
-///   if the call was made with need_confirm = true, this event is fired when the either the paired device responded or the command
-///   timed out waiting for a response.
-///   
-/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
-/// @param param The parameters of the received event.
-static void on_indicate_sent(esp_gatt_if_t profile_selector, struct gatts_conf_evt_param param)
-{
-    ESP_LOGI(COMPONENT_TAG, "ESP_GATTS_CONF_EVT, status %d attr_handle %d", param.status, param.handle);
-    if (param.status != ESP_GATT_OK)
-    {
-        esp_log_buffer_hex(COMPONENT_TAG, param.value, param.len);
-    }
-}
-
+// ------------------------------ Registration event handlers -----------------------------------------------------------------------------------------------------------
 /// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_REG_EVT (a new profile was registered and we
 ///   need to create the service for it).
 ///   This is also where we can associate the profile with the gatt_if (profile_selector) value so we can route the subsequent events correctly.
@@ -139,7 +116,7 @@ static void on_profile_registered(esp_gatt_if_t profile_selector, struct gatts_r
 {
     if (param.status != ESP_GATT_OK)
     {
-        ESP_LOGE(COMPONENT_TAG, "Registration failed for profile with index %d. Error code=0x%x", param.app_id, param.status);
+        ESP_LOGE(COMPONENT_TAG, "Registration failed for profile with index %d. Error code=%d", param.app_id, param.status);
         abort();
     }
 
@@ -203,14 +180,13 @@ static void on_profile_service_created(esp_gatt_if_t profile_selector, struct ga
 
     if (param.status != ESP_GATT_OK)
     {
-        ESP_LOGE(COMPONENT_TAG, "Failed to create the service for profile with index=%d. Error code=0x%x", profile->index, param.status);
+        ESP_LOGE(COMPONENT_TAG, "Failed to create the service for profile with index=%d. Error code=%d", profile->index, param.status);
         abort();
     }
 
-    ESP_LOGI(COMPONENT_TAG, "Successfully created the service for profile with index=%d. Retrieving the profile definition for it", profile->index);
-
     // Now we know what the handle associated with this profile is, keep it so other places can use it.
     profile->service_handle = param.service_handle;
+    ESP_LOGI(COMPONENT_TAG, "Successfully created the service for profile with index=%d, handle=0x%x. Retrieving the profile definition for it", profile->index, profile->service_handle);
 
     ESP_LOGI(
         COMPONENT_TAG,
@@ -262,7 +238,7 @@ static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gat
 
     if (param.status != ESP_GATT_OK)
     {
-        ESP_LOGE(COMPONENT_TAG, "Failed to create characteristic with index=%d for profile with index=%d. Error code=0x%x", characteristic->index, profile->index, param.status);
+        ESP_LOGE(COMPONENT_TAG, "Failed to create characteristic with index=%d for profile with index=%d. Error code=%d", characteristic->index, profile->index, param.status);
         abort();
     }
 
@@ -271,9 +247,10 @@ static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gat
 
     ESP_LOGI(
         COMPONENT_TAG,
-        "Successfully created characteristic with index=%d for profile with index=%d. Adding its %d descriptors now",
+        "Successfully created characteristic with index=%d (for profile with index=%d), handle=0x%x. Adding its %d descriptors now",
         characteristic->index,
         profile->index,
+        characteristic->handle,
         characteristic->descriptors_count);
     if (characteristic->descriptors_count > 0)
     {
@@ -324,7 +301,7 @@ static void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, s
 
     if (param.status != ESP_GATT_OK)
     {
-        ESP_LOGE(COMPONENT_TAG, "Failed to create descriptor for characteristic with index=%d in profile with index=%d. Error code=0x%x", characteristic->index, profile->index, param.status);
+        ESP_LOGE(COMPONENT_TAG, "Failed to create descriptor for characteristic with index=%d in profile with index=%d. Error code=%d", characteristic->index, profile->index, param.status);
         abort();
     }
 
@@ -335,13 +312,22 @@ static void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, s
     }
 
     descriptor->handle = param.attr_handle;
+    ESP_LOGI(
+        COMPONENT_TAG,
+        "Successfully registered descriptors with index=%d (for characteristic with index=%d from profile with index=%d), handle=0x%x",
+        descriptor->index,
+        characteristic->index,
+        profile->index,
+        descriptor->handle);
+
     if (has_characteristic_complete_descriptor_registration(characteristic))
     {
-        ESP_LOGE(COMPONENT_TAG, "Successfully registered all descriptors for characteristic with index=%d from profile with index=%d", characteristic->index, profile->index);
+        ESP_LOGI(COMPONENT_TAG, "Successfully registered all descriptors for characteristic with index=%d from profile with index=%d", characteristic->index, profile->index);
         add_next_characteristic_if_any(profile);
     }
 }
 
+// ------------------------------ Read/Write event handlers -------------------------------------------------------------------------------------------------------------
 /// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_READ_EVT (the connected devices wants to read the respective
 ///    characteristic value)
 /// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
@@ -375,6 +361,33 @@ static void on_characteristic_value_read(esp_gatt_if_t profile_selector, struct 
     esp_ble_gatts_send_response(profile_selector, param.conn_id, param.trans_id, ESP_GATT_OK, &response);
 }
 
+/// @brief This method is called when ESP infrastructure to indicate the success or failure of a call to esp_ble_gatts_send_indicate(..)
+///   if the call was made with need_confirm = false, this event will be called immediately and show the success or failure of the send
+///   if the call was made with need_confirm = true, this event is fired when the either the paired device responded or the command
+///   timed out waiting for a response.
+///   
+/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
+/// @param param The parameters of the received event.
+static void on_indicate_sent(esp_gatt_if_t profile_selector, struct gatts_conf_evt_param param)
+{
+    ESP_LOGI(COMPONENT_TAG, "ESP_GATTS_CONF_EVT, status %d attr_handle %d", param.status, param.handle);
+    if (param.status != ESP_GATT_OK)
+    {
+        esp_log_buffer_hex(COMPONENT_TAG, param.value, param.len);
+    }
+}
+
+// ------------------------------ Misc event handlers -------------------------------------------------------------------------------------------------------------------
+/// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_DISCONNECT_EVT (the central device disconnected).
+/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
+/// @param param The parameters of the received event.
+static void on_central_device_disconnected(esp_gatt_if_t profile_selector, struct gatts_disconnect_evt_param param)
+{
+    ESP_LOGI(COMPONENT_TAG, "Device disconnect reason %d. Restarting advertising", param.reason);
+    esp_ble_gap_start_advertising(&ble_advertising_parameters);
+}
+
+// ------------------------------ THE ROOT EVENT HANDLER (which invokes all the others) ---------------------------------------------------------------------------------
 /// @brief This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 ///    This performs the common tasks (which do not depend on a specific profile, or apply to all profiles)
 /// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
