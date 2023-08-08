@@ -6,13 +6,13 @@
     "*.excalidrawlib": "json",
     "ble_gatt_server_infra.h": "c",
     "esp_gap_ble_api.h": "c",
-    "gatt_profile_definition.h": "c",
+    "ble_gatt_profile.h": "c",
     "router_controller_profile.h": "c",
     "type_traits": "c",
     "esp_bt_main.h": "c",
     "esp_bt.h": "c",
     "gatt_event_handler.h": "c",
-    "gatt_characteristic_descriptor_definition.h": "c"
+    "ble_gatt_descriptor.h": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4"

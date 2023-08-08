@@ -6,9 +6,9 @@
 #pragma once
 
 #include "esp_gap_ble_api.h"
-#include "gatt_profile_definition.h"
-#include "gatt_characteristic_definition.h"
-#include "gatt_characteristic_descriptor_definition.h"
+#include "ble_gatt_profile.h"
+#include "ble_gatt_characteristic.h"
+#include "ble_gatt_descriptor.h"
 
 // ---------------------------------------------------------------------------------------------
 // -- Section: BLE_ADVERTISING                                                               ---

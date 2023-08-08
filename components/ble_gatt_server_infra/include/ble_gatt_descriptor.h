@@ -1,4 +1,4 @@
-/// @file gatt_characteristic_descriptor_definition.h
+/// @file ble_gatt_descriptor.h
 /// @brief The type definition for a GATT characteristic descriptor.
 ///
 ///   [PRIVATE] This is not intended to be included directly, but it can, it contains public types.

@@ -1,4 +1,4 @@
-/// @file gatt_characteristic_definition.h
+/// @file ble_gatt_characteristic.h
 /// @brief The type definition for a GATT profile characteristic (essentially the attributes container within a profile)
 ///
 ///   [PRIVATE] This is not intended to be included directly, but it can, it contains public types.
@@ -6,7 +6,7 @@
 #pragma once
 #include "esp_gatts_api.h"
 
-#include "gatt_characteristic_descriptor_definition.h"
+#include "ble_gatt_descriptor.h"
 
 typedef struct
 {
