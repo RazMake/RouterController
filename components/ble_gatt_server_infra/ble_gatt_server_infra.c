@@ -35,7 +35,7 @@ void initialize_ble_gatt_server(void)
 /// @brief This method selects (from the gatt_profile_table) the profile matching the specified gatts_if value.
 /// @param profile_selector The value provided by the infrastructure to identify which profile is an event for.
 /// @return The profile definition that matches the specified 'gatts_if' or NULL if nothing matched.
-struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_selector)
+ble_gatt_profile_t* get_profile_by_selector(esp_gatt_if_t profile_selector)
 {
     for (int i = 0; i < gatt_profiles_count; i++)
     {
@@ -53,9 +53,9 @@ struct gatt_profile_definition* get_profile_by_selector(esp_gatt_if_t profile_se
 /// @param profile The profile whose characteristic we're looking up.
 /// @param target_chararacteristic_uuid The UUID of the characteristic to find and return.
 /// @return The characteristic definition that matches the specified UUID value, or NULL if none matched.
-struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_profile_definition* profile, esp_bt_uuid_t target_characteristic_uuid)
+ble_gatt_characteristic_t* get_characteristic_by_uuid(ble_gatt_profile_t* profile, esp_bt_uuid_t target_characteristic_uuid)
 {
-    struct gatt_characteristic_definition* profile_characteristic;
+    ble_gatt_characteristic_t* profile_characteristic;
     for (int c = 0; c < profile->characteristics_count; c++)
     {
         profile_characteristic = profile->characteristics_table[c];
@@ -104,9 +104,9 @@ struct gatt_characteristic_definition* get_characteristic_by_uuid(struct gatt_pr
 /// @param profile The profile whose characteristic we're looking up.
 /// @param target_characteristic_handle The handle of the characteristic to find and return.
 /// @return The characteristic definition that matches the specified UUID values.
-struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_profile_definition* profile, uint16_t target_characteristic_handle)
+ble_gatt_characteristic_t* get_characteristic_by_handle(ble_gatt_profile_t* profile, uint16_t target_characteristic_handle)
 {
-    struct gatt_characteristic_definition* profile_characteristic;
+    ble_gatt_characteristic_t* profile_characteristic;
     for (int c = 0; c < profile->characteristics_count; c++)
     {
         profile_characteristic = profile->characteristics_table[c];
@@ -124,9 +124,9 @@ struct gatt_characteristic_definition* get_characteristic_by_handle(struct gatt_
 /// @param characteristic The characteristic whose descriptors we're looking up.
 /// @param target_descriptor_uuid The handle of the descriptor to find and return.
 /// @return The descriptor definition that matches the specified UUID value.
-struct gatt_characteristic_descriptor_definition* get_descriptor_by_uuid(struct gatt_characteristic_definition* characteristic, esp_bt_uuid_t target_descriptor_uuid)
+ble_gatt_descriptor_t* get_descriptor_by_uuid(ble_gatt_characteristic_t* characteristic, esp_bt_uuid_t target_descriptor_uuid)
 {
-    struct gatt_characteristic_descriptor_definition* descriptor;
+    ble_gatt_descriptor_t* descriptor;
     for (int d = 0; d < characteristic->descriptors_count; d++)
     {
         descriptor = characteristic->descriptors_table[d];

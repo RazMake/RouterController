@@ -9,12 +9,12 @@
 /// @brief This is a method that counts the handles needed for this profile.
 /// @param profile A pointer to the profile whose handles to count.
 /// @returns The calculated number of handles needed by this profile.
-static uint16_t get_handles_count(struct gatt_profile_definition* profile)
+static uint16_t get_handles_count(ble_gatt_profile_t* profile)
 {
     uint16_t handles_count = 1; // A handle is required by the service of this profile;
 
     // Add characteristic and descriptor handles, if there are any defined.
-    struct gatt_characteristic_definition* characteristic;
+    ble_gatt_characteristic_t* characteristic;
     for (int c = 0; c< profile->characteristics_count; c++)
     {
         characteristic = profile->characteristics_table[c];
@@ -31,7 +31,7 @@ static uint16_t get_handles_count(struct gatt_profile_definition* profile)
 /// @brief This method searches the next characteristic that is not registered.
 /// @param profile The profile whose characteristics are to be registered.
 /// @returns NULL = All characteristics of the specified profile were initialized, or the characteristic that must be initialized next.
-static struct gatt_characteristic_definition* get_next_characteristic_to_register(struct gatt_profile_definition* profile)
+static ble_gatt_characteristic_t* get_next_characteristic_to_register(ble_gatt_profile_t* profile)
 {
     for (int c = 0; c<profile->characteristics_count; c++)
     {
@@ -52,9 +52,9 @@ static struct gatt_characteristic_definition* get_next_characteristic_to_registe
 
 /// @brief Starts adding the next characteristic of the specified profile, if there is any one that was not added yet.
 /// @param profile The profile whose characteristic to add/register.
-static void add_next_characteristic_if_any(struct gatt_profile_definition* profile)
+static void add_next_characteristic_if_any(ble_gatt_profile_t* profile)
 {
-    struct gatt_characteristic_definition* characteristic = get_next_characteristic_to_register(profile);
+    ble_gatt_characteristic_t* characteristic = get_next_characteristic_to_register(profile);
     if (!characteristic)
     {
         ESP_LOGI(COMPONENT_TAG, "Finished registering characteristics (%d) for profile with index=%d", profile->characteristics_count, profile->index);
@@ -75,7 +75,7 @@ static void add_next_characteristic_if_any(struct gatt_profile_definition* profi
 ///   A descriptor gets its 'handle' property set when it is registered, so we're looking for any descriptor with handle = 0.
 /// @param characteristic The characteristic to check for unregistered (yet) descriptors.
 /// @return True = there is at least one descriptor that is not registered yet, False = otherwise.
-static bool has_characteristic_complete_descriptor_registration(struct gatt_characteristic_definition* characteristic)
+static bool has_characteristic_complete_descriptor_registration(ble_gatt_characteristic_t* characteristic)
 {
     for (int d=0; d<characteristic->descriptors_count; d++)
     {
@@ -92,7 +92,7 @@ static bool has_characteristic_complete_descriptor_registration(struct gatt_char
 /// @param profile The profile whose characteristics to look at.
 /// @returns NULL, if all the characteristics in the profile have all their descriptors registered, or the first encountered characteristic
 ///    which does not have all its descriptors registered yet.
-static struct gatt_characteristic_definition* get_characteristic_with_incomplete_descriptor_registration(struct gatt_profile_definition* profile)
+static ble_gatt_characteristic_t* get_characteristic_with_incomplete_descriptor_registration(ble_gatt_profile_t* profile)
 {
     for (int c=0; c<profile->characteristics_count; c++)
     {
@@ -128,7 +128,7 @@ static void on_profile_registered(esp_gatt_if_t profile_selector, struct gatts_r
         abort();
     }
 
-    struct gatt_profile_definition* profile = gatt_profiles_table[param.app_id];
+    ble_gatt_profile_t* profile = gatt_profiles_table[param.app_id];
     esp_gatt_srvc_id_t service_id =
     {
         .is_primary = true, // I have simplified the definition a bit and considering all services to be primary since I had no case of imbricated services.
@@ -170,7 +170,7 @@ static void on_profile_registered(esp_gatt_if_t profile_selector, struct gatts_r
 /// @param param The parameters of the received event.
 static void on_profile_service_created(esp_gatt_if_t profile_selector, struct gatts_create_evt_param param)
 {
-    struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+    ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
     if (!profile)
     {
         // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
@@ -199,7 +199,7 @@ static void on_profile_service_created(esp_gatt_if_t profile_selector, struct ga
         COMPONENT_TAG,
         "Successfully created service for profile with index=%d. Begin creating its characteristics",
         profile->index);
-    struct gatt_characteristic_definition* characteristic = get_next_characteristic_to_register(profile);
+    ble_gatt_characteristic_t* characteristic = get_next_characteristic_to_register(profile);
     if (!characteristic)
     {
         // Since we're just registering/creating this service, it is impossible that at this time we already have all the characteristics registered.
@@ -223,14 +223,14 @@ static void on_profile_service_created(esp_gatt_if_t profile_selector, struct ga
 /// @param param The parameters of the received event.
 static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gatts_add_char_evt_param param)
 {
-    struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+    ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
     if (!profile)
     {
         // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
         // If it somehow does, we cannot continue because we don't know which profile is this event for.
         abort();
     }
-    struct gatt_characteristic_definition* characteristic = get_characteristic_by_uuid(profile, param.char_uuid);
+    ble_gatt_characteristic_t* characteristic = get_characteristic_by_uuid(profile, param.char_uuid);
     if (!characteristic)
     {
         abort();
@@ -259,7 +259,7 @@ static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gat
         // We can register all descriptors in one go, since they do not have any children, so there is no confusion.
         for(int d=0; d<characteristic->descriptors_count; d++)
         {
-            struct gatt_characteristic_descriptor_definition* descriptor = characteristic->descriptors_table[d];
+            ble_gatt_descriptor_t* descriptor = characteristic->descriptors_table[d];
             descriptor->index = d;
             descriptor->handle = 0;
             ESP_LOGI(COMPONENT_TAG, "Adding descriptor with index=%d for characteristic with index=%d in profile with index=%d", d, characteristic->index, profile->index);
@@ -283,7 +283,7 @@ static void on_characteristic_created(esp_gatt_if_t profile_selector, struct gat
 /// @param param The parameters of the received event.
 static void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, struct gatts_add_char_descr_evt_param param)
 {
-    struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+    ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
     if (!profile)
     {
         // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
@@ -291,7 +291,7 @@ static void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, s
         abort();
     }
 
-    struct gatt_characteristic_definition* characteristic = get_characteristic_with_incomplete_descriptor_registration(profile);
+    ble_gatt_characteristic_t* characteristic = get_characteristic_with_incomplete_descriptor_registration(profile);
     if (!characteristic)
     {
         // This should never happen, but just in case, I want to see it in the logs:
@@ -305,7 +305,7 @@ static void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, s
         abort();
     }
 
-    struct gatt_characteristic_descriptor_definition* descriptor = get_descriptor_by_uuid(characteristic, param.descr_uuid);
+    ble_gatt_descriptor_t* descriptor = get_descriptor_by_uuid(characteristic, param.descr_uuid);
     if (!descriptor)
     {
         abort();
@@ -341,13 +341,13 @@ static void on_characteristic_value_read(esp_gatt_if_t profile_selector, struct 
         param.trans_id,
         param.handle);
 
-    struct gatt_profile_definition* profile = get_profile_by_selector(profile_selector);
+    ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
     if (!profile)
     {
         return;
     }
 
-    struct gatt_characteristic_definition* characteristic = get_characteristic_by_handle(profile, param.handle);
+    ble_gatt_characteristic_t* characteristic = get_characteristic_by_handle(profile, param.handle);
     esp_gatt_rsp_t response;
     memset(&response, 0, sizeof(esp_gatt_rsp_t));
 

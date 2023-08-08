@@ -5,4 +5,4 @@
 
 /// @brief This is the characteristic that returns the current router height.
 /// @note This is NOT defined as a const because we set some properties on it once it is successfully registered.
-extern struct gatt_characteristic_definition height_characteristic;
+extern ble_gatt_characteristic_t height_characteristic;

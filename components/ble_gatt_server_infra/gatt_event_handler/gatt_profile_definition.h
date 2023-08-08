@@ -16,7 +16,7 @@ typedef void (* gatts_profile_handler_t)(esp_gatts_cb_event_t event, esp_ble_gat
 ///
 /// The consumers of the library must crete a table with at least one record for one profile, for the device
 /// to accept connections over BLE.
-struct gatt_profile_definition
+typedef struct
  {
     /// @brief This is a unique identifier of the profile.
     ///    This is needed when registering the profile (aka. service).
@@ -55,5 +55,5 @@ struct gatt_profile_definition
     uint8_t characteristics_count;
 
     /// @brief This defines the list of characteristics for this profile.
-    struct gatt_characteristic_definition* characteristics_table[];
-};
+    ble_gatt_characteristic_t* characteristics_table[];
+} ble_gatt_profile_t;

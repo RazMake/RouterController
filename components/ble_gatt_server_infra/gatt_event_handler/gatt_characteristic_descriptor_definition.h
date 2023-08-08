@@ -6,7 +6,7 @@
 #pragma once
 #include "esp_gatts_api.h"
 
-struct gatt_characteristic_descriptor_definition
+typedef struct
 {
     /// @brief This is a unique identifier of the descriptor.
     ///    This is needed when registering the descriptor.
@@ -47,4 +47,4 @@ struct gatt_characteristic_descriptor_definition
     ///      ESP_GATT_PERM_WRITE_AUTHORIZATION
     ///      ESP_GATT_PERM_ENCRYPT_KEY_SIZE(keysize)
     esp_gatt_perm_t permissions;
-};
+} ble_gatt_descriptor_t;

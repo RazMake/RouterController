@@ -9,7 +9,7 @@ static uint8_t initialValue[] = { 0x0A, 0x0B };
 
 static uint8_t property_description_text[] = { 'T', 'h', 'i', 's', ' ', 't', 'e', 's', 't' };
 
-static struct gatt_characteristic_descriptor_definition property_description=
+static ble_gatt_descriptor_t property_description=
 {
     .id =  
     {
@@ -26,7 +26,7 @@ static struct gatt_characteristic_descriptor_definition property_description=
 
 /// @brief This is the characteristic that returns the current router height.
 /// @note This is NOT defined as a const because we set some properties on it once it is successfully registered.
-struct gatt_characteristic_definition height_characteristic =
+ble_gatt_characteristic_t height_characteristic =
 {
     .id =  
     {

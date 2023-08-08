@@ -6,4 +6,4 @@
 
 /// @brief This is the profile that contains the router controls.
 /// @note This is NOT defined as a const because we set some properties on it once it is successfully registered.
-extern struct gatt_profile_definition controller_profile;
+extern ble_gatt_profile_t controller_profile;

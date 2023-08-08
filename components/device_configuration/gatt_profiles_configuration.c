@@ -11,7 +11,7 @@ const uint8_t gatt_profiles_count = 1;
 ///
 /// Note: This is defined as an array of pointers because I could not find a way to initialize it
 ///   nicely with instaces of the structs defined in separate files (not inline).
-struct gatt_profile_definition *gatt_profiles_table[] =
+ble_gatt_profile_t *gatt_profiles_table[] =
 {
     &controller_profile,
 };

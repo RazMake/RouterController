@@ -6,7 +6,9 @@
 #pragma once
 #include "esp_gatts_api.h"
 
-struct gatt_characteristic_definition
+#include "gatt_characteristic_descriptor_definition.h"
+
+typedef struct
 {
     /// @brief This is a unique identifier of the characteristic.
     ///    This is needed when registering the characteristic.
@@ -77,5 +79,5 @@ struct gatt_characteristic_definition
 
     /// @brief This is the table of descriptors of this characteristic.
     ///   The characteristic can have 0 or more descriptors.
-    struct gatt_characteristic_descriptor_definition* descriptors_table[];
-};
+    ble_gatt_descriptor_t* descriptors_table[];
+} ble_gatt_characteristic_t;

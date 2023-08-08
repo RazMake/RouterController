@@ -230,7 +230,7 @@ static void router_controller_profile_handler(esp_gatts_cb_event_t event, esp_bl
 }
 
 /// @brief This is the profile that contains the router controls.
-struct gatt_profile_definition controller_profile =
+ble_gatt_profile_t controller_profile =
 {
     .id =
         {
