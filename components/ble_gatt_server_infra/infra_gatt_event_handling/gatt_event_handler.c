@@ -3,42 +3,11 @@
 #include <string.h>
 #include "gatt_event_handler.h"
 #include "gatt_profile_registration.h"
+#include "gatt_read.h"
 #include "esp_log.h"
 #define COMPONENT_TAG "GATT_EVENT_HANDLER"
 
 // ------------------------------ Read/Write event handlers -------------------------------------------------------------------------------------------------------------
-/// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_READ_EVT (the connected devices wants to read the respective
-///    characteristic value)
-/// @param profile_selector This is an identifier assigned by the ESP infrastructure to the profile, when it is registered.
-/// @param param The parameters of the received event.
-static void on_characteristic_value_read(esp_gatt_if_t profile_selector, struct gatts_read_evt_param param)
-{
-    ESP_LOGI(
-        COMPONENT_TAG,
-        "Characteristic being read (conn_id %d, trans_id %" PRIu32 ", handle %d",
-        param.conn_id,
-        param.trans_id,
-        param.handle);
-
-    ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
-    if (!profile)
-    {
-        return;
-    }
-
-    ble_gatt_characteristic_t* characteristic = get_characteristic_by_handle(profile, param.handle);
-    esp_gatt_rsp_t response;
-    memset(&response, 0, sizeof(esp_gatt_rsp_t));
-
-    response.handle = characteristic->handle,
-    response.attr_value.len = characteristic->value.attr_len;
-    for (int i=0; i<characteristic->value.attr_len; i++)
-    {
-        response.attr_value.value[i] = characteristic->value.attr_value[i];
-    }
-
-    esp_ble_gatts_send_response(profile_selector, param.conn_id, param.trans_id, ESP_GATT_OK, &response);
-}
 
 /// @brief This method is called when ESP infrastructure to indicate the success or failure of a call to esp_ble_gatts_send_indicate(..)
 ///   if the call was made with need_confirm = false, this event will be called immediately and show the success or failure of the send
@@ -81,7 +50,7 @@ void gatt_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t profile_select
         case ESP_GATTS_CONF_EVT: on_indicate_sent(profile_selector, param->conf); return;
         case ESP_GATTS_ADD_CHAR_EVT: on_characteristic_created(profile_selector, param->add_char); return;
         case ESP_GATTS_ADD_CHAR_DESCR_EVT: on_characteristic_descriptor_added(profile_selector, param->add_char_descr); return;
-        case ESP_GATTS_READ_EVT: on_characteristic_value_read(profile_selector, param->read); return;
+        case ESP_GATTS_READ_EVT: on_value_read(profile_selector, param->read); return;
         default: break;
     }
  

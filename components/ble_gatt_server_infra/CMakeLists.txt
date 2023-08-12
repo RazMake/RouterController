@@ -6,6 +6,7 @@ idf_component_register(
         "infra_gap_event_handling/gap_event_handler.c"
         "infra_gatt_event_handling/gatt_event_handler.c"
         "infra_gatt_event_handling/gatt_registration_event_handlers/gatt_profile_registration.c"
+        "infra_gatt_event_handling/gatt_read_event_handlers/gatt_read.c"
     INCLUDE_DIRS
         "."
         "include"
@@ -13,6 +14,7 @@ idf_component_register(
         "infra_gap_event_handling/gap_advertising"
         "infra_gatt_event_handling"
         "infra_gatt_event_handling/gatt_registration_event_handlers"
+        "infra_gatt_event_handling/gatt_read_event_handlers"
     REQUIRES
         bt
 )

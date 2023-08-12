@@ -7,7 +7,7 @@
 
 static uint8_t initialValue[] = { 0x0A, 0x0B };
 
-static uint8_t property_description_text[] = { 'T', 'h', 'i', 's', ' ', 't', 'e', 's', 't' };
+static uint8_t property_description_text[] = { 'A', 'l', 'e', 'x', ' ', 'P', 'o', 'p', 'o', 'v' };
 
 static ble_gatt_descriptor_t property_description=
 {
