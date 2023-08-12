@@ -1,15 +1,18 @@
 idf_component_register(
     SRCS
         "ble_gatt_server_infra.c"
+        "ble_gatt_utils.c"
         "infra_advertising/infra_advertising.c"
         "infra_gap_event_handling/gap_event_handler.c"
         "infra_gatt_event_handling/gatt_event_handler.c"
+        "infra_gatt_event_handling/gatt_registration_event_handlers/gatt_profile_registration.c"
     INCLUDE_DIRS
         "."
         "include"
         "infra_advertising"
         "infra_gap_event_handling"
         "infra_gatt_event_handling"
+        "infra_gatt_event_handling/gatt_registration_event_handlers"
     REQUIRES
         bt
 )
