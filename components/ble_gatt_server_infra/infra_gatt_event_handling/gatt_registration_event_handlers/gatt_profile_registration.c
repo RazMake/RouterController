@@ -1,6 +1,6 @@
 #include "gatt_profile_registration.h"
 #include "ble_gatt_server_infra.h"
-#include "gatt_profile_registration_macros.h"
+#include "gatt_handling_macros.h"
 #include "esp_log.h"
 #define COMPONENT_TAG "GATT_PROFILE_REGISTRATION"
 
