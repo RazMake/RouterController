@@ -1,6 +1,6 @@
 #include "gatt_profile_registration.h"
 #include "ble_gatt_server_infra.h"
-
+#include "gatt_profile_registration_macros.h"
 #include "esp_log.h"
 #define COMPONENT_TAG "GATT_PROFILE_REGISTRATION"
 
@@ -53,16 +53,28 @@ static bool are_all_descriptors_registered(ble_gatt_characteristic_t* characteri
     return true;
 }
 
+#define begin_adding_characteristics() add_characteristic(0);
 /// @brief Checks if we finished adding characteristics and if we did not adds the next one in the list.
-static void add_next_characteristic(void)
+static void add_characteristic(uint8_t index)
 {
+    ASSERT_VALID_PROFILE_INDEX(
+        profile_index,
+        "Registration failed for characteristic with index %d: Invalid parent profile index provided: %d",
+        index,
+        profile_index);
     ble_gatt_profile_t* profile = gatt_profiles_table[profile_index];
-    ble_gatt_characteristic_t* characteristic = profile->characteristics_table[characteristic_index];
-    if (!characteristic)
+    ASSERT_NOT_NULL(profile, "Registration failed for characteristic with index %d: The parent profile (index=%d) is NULL", index, profile_index);
+
+    if (index == profile->characteristics_count)
     {
-        ESP_LOGI(COMPONENT_TAG, "Finished registering characteristics (%d) for profile with index=%d", profile->characteristics_count, profile->index);
+        ESP_LOGI(COMPONENT_TAG, "Done adding characteristics for profile with index=%d", profile->index);
         return;
     }
+
+    characteristic_index = index;
+    ble_gatt_characteristic_t* characteristic = profile->characteristics_table[characteristic_index];
+    characteristic->index = characteristic_index;
+    ASSERT_NOT_NULL(characteristic, "Registration failed for characteristic with index %d: The parent profile (index=%d) has NULL for this characteristic", index, profile->index);
 
     ESP_LOGI(COMPONENT_TAG, "Adding characteristic with index=%d for profile with index=%d", characteristic_index, profile->index);
     ESP_ERROR_CHECK(esp_ble_gatts_add_char(
@@ -74,11 +86,15 @@ static void add_next_characteristic(void)
         NULL));
 }
 
-/// @brief This method registers the profiles in the order they're defined in the gatt_profiles_table,
-///   one by one, so the registration of the characteristics and descriptors does not get mixed up.
-///   This is necesary because the registration is spread out over multiple events and the infrastructure
-///   does not provide sufficient identification of what is the parent of each object being registered.
-void register_ble_profiles(void)
+/// @brief This method initiates registration for the profile with the specified index with the BLE runtime infrastructure.
+/// @param index The index of the profile to start registering.
+///
+/// @remarks
+///   This is necessary because registering a profile is a multi-step asynchronous operation and the BLE runtime infrastructure
+///   is not well enough written (it does not provide the necessary information in the events fired after each step completes).
+///   To mitigate this situation we register each profile and its characteristics one at a time, so we implicitly can know
+///   which profile and which characteristic we're currently registering (the problem is when registering descriptors for characteristics).
+void register_ble_profile(uint8_t index)
 {
     if (profile_index >= gatt_profiles_count)
     {
@@ -86,8 +102,9 @@ void register_ble_profiles(void)
         return;
     }
 
+    profile_index = index; // Remember which profile we're currently registering
     ESP_LOGI(COMPONENT_TAG, "Begin profile %d registration", profile_index);
-    ESP_ERROR_CHECK(esp_ble_gatts_app_register(profile_index)); // Next time the method is called, it will be for the next profile in the table.
+    ESP_ERROR_CHECK(esp_ble_gatts_app_register(profile_index));
 }
 
 /// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_REG_EVT (a new profile was registered and we
@@ -98,30 +115,18 @@ void register_ble_profiles(void)
 /// @param param The parameters of the received event.
 void on_profile_registered(esp_gatt_if_t profile_selector, struct gatts_reg_evt_param param)
 {
-    if (param.status != ESP_GATT_OK)
-    {
-        ESP_LOGE(COMPONENT_TAG, "Registration failed for profile with index %d. Error code=%d", param.app_id, param.status);
-        abort();
-    }
-
-    // The app_id value, is exactly the value passed initially to the esp_ble_gatts_app_register(..) call:
-    // the index in the profiles table:
-    if (param.app_id >= gatt_profiles_count)
-    {
-        ESP_LOGE(COMPONENT_TAG, "Registration failed. There is no profile with index %d. Valid indexes=0..%d", param.app_id, gatt_profiles_count);
-        abort();
-    }
-
-    if (param.app_id != profile_index)
-    {
-        // This should never happen. If it does, it likely indicates a coding error.
-        ESP_LOGE(
-            COMPONENT_TAG,
-            "Registration check failed. The index of the profile being registered is %d but the event arguments point to profile with index %d",
-            profile_index,
-            param.app_id);
-        abort();
-    }
+    ASSERT_STATUS_OK(param.status, "Registration failed for profile with index %d: Error code=%d", param.app_id, param.status);
+    ASSERT_VALID_PROFILE_INDEX(
+        param.app_id,
+        "Registration failed for profile with index %d: There is no profile with that index (valid indexes=0..%d). Current profile_index=%d",
+        param.app_id,
+        gatt_profiles_count,
+        profile_index);
+    ASSERT_EXPECTED_PROFILE_BEING_REGISTERED(
+        param.app_id,
+        "Registration failed for profile with index %d: Another profile (with index=%d) was being registered",
+        param.app_id,
+        profile_index);
 
     ble_gatt_profile_t* profile = gatt_profiles_table[param.app_id];
     esp_gatt_srvc_id_t service_id =
@@ -165,54 +170,20 @@ void on_profile_registered(esp_gatt_if_t profile_selector, struct gatts_reg_evt_
 /// @param param The parameters of the received event.
 void on_profile_service_created(esp_gatt_if_t profile_selector, struct gatts_create_evt_param param)
 {
+    ASSERT_STATUS_OK(param.status, "Service creation failed for profile with index %d: Error code=%d", profile_index, param.status);
     ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
-    if (!profile)
-    {
-        // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
-        // If it somehow does, we cannot continue because we don't know which profile is this event for.
-        abort();
-    }
-
-    if (param.status != ESP_GATT_OK)
-    {
-        ESP_LOGE(COMPONENT_TAG, "Failed to create the service for profile with index=%d. Error code=%d", profile->index, param.status);
-        abort();
-    }
+    ASSERT_NOT_NULL(profile, "Service creation failed for profile with index %d: There is no profile with selector=%d", profile_index, profile_selector);
+    ASSERT_PROFILE_HAS_AT_LEAST_ONE_CHARACTERISTIC(profile);
 
     // Now we know what the handle associated with this profile is, keep it so other places can use it.
     profile->service_handle = param.service_handle;
     ESP_LOGI(COMPONENT_TAG, "Successfully created the service for profile with index=%d, handle=0x%x", profile->index, profile->service_handle);
 
-    ESP_LOGI(
-        COMPONENT_TAG,
-        "Starting the service for profile with index=%d. Service handle=0x%x",
-        profile->index,
-        param.service_handle);
+    ESP_LOGI(COMPONENT_TAG, "Starting the service for profile with index=%d. Service handle=0x%x", profile->index, param.service_handle);
     ESP_ERROR_CHECK(esp_ble_gatts_start_service(param.service_handle));
+    ESP_LOGI(COMPONENT_TAG, "Successfully created service for profile with index=%d. Begin adding its characteristics", profile->index);
 
-    ESP_LOGI(
-        COMPONENT_TAG,
-        "Successfully created service for profile with index=%d. Begin adding its characteristics",
-        profile->index);
-
-    if (profile->characteristics_count == 0)
-    {
-        // Since we're just registering/creating this service, it is impossible that at this time we already have all the characteristics registered.
-        // The only way we don't find any characteristic to register here is if the service does not have ANY, which is invalid according to the spec.
-        ESP_LOGE(COMPONENT_TAG, "Profile with index=%d does not have any characteristics", profile->index);
-        abort();
-    }
-
-    ble_gatt_characteristic_t* characteristic = profile->characteristics_table[characteristic_index];
-    characteristic->index = characteristic_index;
-    ESP_LOGI(COMPONENT_TAG, "Adding characteristic with index=%d for profile with index=%d", characteristic_index, profile->index);
-    ESP_ERROR_CHECK(esp_ble_gatts_add_char(
-        profile->service_handle,
-        &(characteristic->id),
-        characteristic->permissions,
-        characteristic->properties,
-        &(characteristic->value),
-        NULL));
+    begin_adding_characteristics();
 }
 
 /// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_ADD_CHAR_EVT (after it had added a characteristic to a profile).
@@ -220,58 +191,48 @@ void on_profile_service_created(esp_gatt_if_t profile_selector, struct gatts_cre
 /// @param param The parameters of the received event.
 void on_characteristic_created(esp_gatt_if_t profile_selector, struct gatts_add_char_evt_param param)
 {
+    ASSERT_STATUS_OK(param.status, "Characteristic with index %d creation failed for profile with index %d: Error code=%d", characteristic_index, profile_index, param.status);
     ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
-    if (!profile)
-    {
-        // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
-        // If it somehow does, we cannot continue because we don't know which profile is this event for.
-        abort();
-    }
-
-    if (characteristic_index >= profile->characteristics_count)
-    {
-        ESP_LOGE(
-            COMPONENT_TAG,
-            "Failed to create characteristic for profile with index=%d. There is no characteristic with index=%d (valid index: 0..%d)",
-            profile->index,
-            characteristic_index,
-            profile->characteristics_count);
-            abort();
-    }
-
+    ASSERT_NOT_NULL(
+        profile,
+        "Characteristic with index %d creation failed for profile with index %d: There is no profile with selector=%d",
+        characteristic_index,
+        profile_index,
+        profile_selector);
+    ASSERT_VALID_CHARACTERISTIC_INDEX(
+        profile,
+        characteristic_index,
+        "Characteristic with index %d creation failed for profile with index %d: There is no characteristic with this index (valid index:0..%d)",
+        characteristic_index,
+        profile_index,
+        profile->characteristics_count);
     ble_gatt_characteristic_t* characteristic = profile->characteristics_table[characteristic_index];
+    ASSERT_NOT_NULL(
+        characteristic,
+        "Characteristic with index %d creation failed for profile with index %d: The parent profile has NULL for this characteristic in the characteristics_table",
+        characteristic_index,
+        profile_index);
+
     if (!are_uuids_equal(characteristic->id, param.char_uuid))
     {
         ESP_LOGE(
             COMPONENT_TAG,
-            "Failed to create characteristic for profile with index=%d. The value in param.char_uuid does not match characteristic currently beig added (index=%d)",
-            profile->index,
-            characteristic_index);
+            "Characteristic with index %d creation failed for profile with index %d:  The value in param.char_uuid does not match characteristic currently beig added",
+            characteristic_index,
+            profile_index);
             abort();
     }
 
-    if (param.status != ESP_GATT_OK)
-    {
-        ESP_LOGE(
-            COMPONENT_TAG,
-            "Failed to create characteristic with index=%d for profile with index=%d. Error code=%d",
-            characteristic->index,
-            profile->index,
-            param.status);
-        abort();
-    }
-
     characteristic->handle = param.attr_handle;
-    characteristic->index = characteristic_index;
-    ESP_LOGI(
-        COMPONENT_TAG,
-        "Successfully created characteristic with index=%d (for profile with index=%d), handle=0x%x. Adding its %d descriptors now",
-        characteristic->index,
-        profile->index,
-        characteristic->handle,
-        characteristic->descriptors_count);
     if (characteristic->descriptors_count > 0)
     {
+        ESP_LOGI(
+            COMPONENT_TAG,
+            "Successfully created characteristic with index=%d (for profile with index=%d), handle=0x%x. Adding its %d descriptors now",
+            characteristic->index,
+            profile->index,
+            characteristic->handle,
+            characteristic->descriptors_count);
         // Register descriptors for THIS characteristic, before continuing with adding other characteristics
         // (otheriwse the descriptors will be attached to the incorrect characteristic).
         // We can register all descriptors in one go, since they do not have any children, so there is no confusion.
@@ -279,8 +240,12 @@ void on_characteristic_created(esp_gatt_if_t profile_selector, struct gatts_add_
         {
             ble_gatt_descriptor_t* descriptor = characteristic->descriptors_table[d];
             descriptor->index = d;
-            descriptor->handle = 0;
-            ESP_LOGI(COMPONENT_TAG, "Adding descriptor with index=%d for characteristic with index=%d in profile with index=%d", d, characteristic->index, profile->index);
+            ESP_LOGI(
+                COMPONENT_TAG,
+                "Adding descriptor with index=%d for characteristic with index=%d in profile with index=%d",
+                d,
+                characteristic->index,
+                profile->index);
             ESP_ERROR_CHECK(esp_ble_gatts_add_char_descr(
                 profile->service_handle,
                 &(descriptor->id),
@@ -291,9 +256,15 @@ void on_characteristic_created(esp_gatt_if_t profile_selector, struct gatts_add_
     }
     else
     {
+        ESP_LOGI(
+            COMPONENT_TAG,
+            "Successfully created characteristic with index=%d (for profile with index=%d), handle=0x%x. It has no descriptors",
+            characteristic->index,
+            profile->index,
+            characteristic->handle);
+
         // If the characteristic has no descriptors, continue registering the next characteristic:
-        characteristic_index++;
-        add_next_characteristic();
+        add_characteristic(characteristic_index + 1);
     }
 }
 
@@ -302,60 +273,44 @@ void on_characteristic_created(esp_gatt_if_t profile_selector, struct gatts_add_
 /// @param param The parameters of the received event.
 void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, struct gatts_add_char_descr_evt_param param)
 {
+    ASSERT_STATUS_OK(
+        param.status,
+        "Descriptor adding to characteristic with index %d failed for profile with index %d: Error code=%d",
+        characteristic_index,
+        profile_index,
+        param.status);
     ble_gatt_profile_t* profile = get_profile_by_selector(profile_selector);
-    if (!profile)
-    {
-        // This should never happen because we associate the profile_selector with the profile definition in the on_profile_registered(..) event handler.
-        // If it somehow does, we cannot continue because we don't know which profile is this event for.
-        abort();
-    }
-
-    if (characteristic_index >= profile->characteristics_count)
-    {
-        ESP_LOGE(
-            COMPONENT_TAG,
-            "Failed to add characteristic descriptor for profile with index=%d. There is no characteristic with index=%d (valid index: 0..%d)",
-            profile->index,
-            characteristic_index,
-            profile->characteristics_count);
-            abort();
-    }
-
-    if (param.status != ESP_GATT_OK)
-    {
-        ESP_LOGE(
-            COMPONENT_TAG,
-            "Failed to create characteristic with index=%d for profile with index=%d. Error code=%d",
-            characteristic_index,
-            profile->index,
-            param.status);
-        abort();
-    }
-
+    ASSERT_NOT_NULL(
+        profile,
+        "Descriptor adding to characteristic with index %d failed for profile with index %d: There is no profile with selector=%d",
+        characteristic_index,
+        profile_index,
+        profile_selector);
+    ASSERT_VALID_CHARACTERISTIC_INDEX(
+        profile,
+        characteristic_index,
+        "Descriptor adding to characteristic with index %d failed for profile with index %d: There is no characteristic with this index (valid index:0..%d)",
+        characteristic_index,
+        profile_index,
+        profile->characteristics_count);
     ble_gatt_characteristic_t* characteristic = profile->characteristics_table[characteristic_index];
-    if (!characteristic)
-    {
-        // This should never happen, but just in case, I want to see it in the logs:
-        ESP_LOGE(COMPONENT_TAG, "Failed to identify which characteristic descriptor belongs to");
-        abort();
-    }
-
-    if (param.status != ESP_GATT_OK)
-    {
-        ESP_LOGE(COMPONENT_TAG, "Failed to create descriptor for characteristic with index=%d in profile with index=%d. Error code=%d", characteristic->index, profile->index, param.status);
-        abort();
-    }
+    ASSERT_NOT_NULL(
+        characteristic,
+        "Descriptor adding to characteristic with index %d failed for profile with index %d: The parent profile has NULL for this characteristic in the characteristics_table",
+        characteristic_index,
+        profile_index);
 
     ble_gatt_descriptor_t* descriptor = get_descriptor_by_uuid(characteristic, param.descr_uuid);
-    if (!descriptor)
-    {
-        abort();
-    }
+    ASSERT_NOT_NULL(
+        descriptor,
+        "Descriptor adding to characteristic with index %d failed for profile with index %d: No descriptor matched the currently being added UUID",
+        characteristic_index,
+        profile_index);
 
     descriptor->handle = param.attr_handle;
     ESP_LOGI(
         COMPONENT_TAG,
-        "Successfully registered descriptors with index=%d (for characteristic with index=%d from profile with index=%d), handle=0x%x",
+        "Successfully registered descriptor with index=%d (for characteristic with index=%d from profile with index=%d), handle=0x%x",
         descriptor->index,
         characteristic->index,
         profile->index,
@@ -364,7 +319,6 @@ void on_characteristic_descriptor_added(esp_gatt_if_t profile_selector, struct g
     if (are_all_descriptors_registered(characteristic))
     {
         ESP_LOGI(COMPONENT_TAG, "Successfully registered all descriptors for characteristic with index=%d from profile with index=%d", characteristic->index, profile->index);
-        add_next_characteristic();
+        add_characteristic(characteristic_index + 1);
     }
 }
-

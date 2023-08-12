@@ -1,11 +1,16 @@
 #pragma once
 #include "esp_gatts_api.h"
 
-/// @brief This method registers the profiles in the order they're defined in the gatt_profiles_table,
-///   one by one, so the registration of the characteristics and descriptors does not get mixed up.
-///   This is necesary because the registration is spread out over multiple events and the infrastructure
-///   does not provide sufficient identification of what is the parent of each object being registered.
-void register_ble_profiles(void);
+#define begin_registering_ble_profiles() register_ble_profile(0)
+/// @brief This method initiates registeration for the profile with the specified index with the BLE runtime infrastructure.
+/// @param index The index of the profile to start registering.
+///
+/// @remarks
+///   This is necessary because registering a profile is a multi-step asynchronous operation and the BLE runtime infrastructure
+///   is not well enough written (it does not provide the necessary information in the events fired after each step completes).
+///   To mitigate this situation we register each profile and its characteristics one at a time, so we implicitly can know
+///   which profile and which characteristic we're currently registering (the problem is when registering descriptors for characteristics).
+void register_ble_profile(uint8_t index);
 
 /// @brief This method is called when the ESP infrastructure receives the ESP_GATTS_REG_EVT (a new profile was registered and we
 ///   need to create the service for it).

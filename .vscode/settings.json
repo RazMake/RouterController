@@ -12,7 +12,8 @@
     "esp_bt_main.h": "c",
     "esp_bt.h": "c",
     "gatt_event_handler.h": "c",
-    "ble_gatt_descriptor.h": "c"
+    "ble_gatt_descriptor.h": "c",
+    "chrono": "c"
   },
   "idf.flashType": "UART",
   "idf.portWin": "COM4"

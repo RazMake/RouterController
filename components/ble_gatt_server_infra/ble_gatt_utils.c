@@ -45,7 +45,6 @@ ble_gatt_profile_t* get_profile_by_selector(esp_gatt_if_t selector)
         }
     }
 
-    ESP_LOGE(COMPONENT_TAG, "No profile found with profile_selector=%d", selector);
     return NULL;
 }
 

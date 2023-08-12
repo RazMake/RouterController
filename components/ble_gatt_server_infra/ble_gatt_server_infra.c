@@ -26,7 +26,7 @@ void initialize_ble_gatt_server(void)
     // Register all profiles defined by the consumer of the platform
     // One at a time, because otherwise registering the characteristics and their descriptors
     // are getting mixed up:
-    register_ble_profiles();
+    begin_registering_ble_profiles();
 
     // Set the advertising data, so the device starts advertising:
     set_advertising_data_and_scan_response(&ble_advertising_data, &ble_scan_response_data);
