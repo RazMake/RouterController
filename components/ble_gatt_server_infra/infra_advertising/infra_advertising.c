@@ -28,7 +28,7 @@ static void start_advertising(void)
     // to avoid starting advertising multiple times.
     if (advertising_configured_bits == 0)
     {
-        ESP_LOGI(COMPONENT_TAG, "Start advertising");
+        ESP_LOGI(COMPONENT_TAG, "Request start advertising");
         ESP_ERROR_CHECK_WITHOUT_ABORT(esp_ble_gap_start_advertising(&ble_advertising_parameters));
     }
     else
