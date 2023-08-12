@@ -1,4 +1,4 @@
-/// @file infra_advertising.h
+/// @file gap_advertising.h
 /// @brief Contract for the advertising submodule
 ///
 ///   [PRIVATE] This is not indended to be directly included by the consumers of the library.

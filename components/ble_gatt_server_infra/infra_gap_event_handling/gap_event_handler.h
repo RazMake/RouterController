@@ -4,7 +4,7 @@
 ///   [PRIVATE] This is not indended to be directly included by the consumers of the library.
 #include "esp_gap_ble_api.h"
 #include "ble_gatt_server_infra.h"
-#include "infra_advertising.h"
+#include "gap_advertising.h"
 
 /// @brief This method is registered as callback with the ESP infrastructure to be called when GAP events are fired.
 /// @param event The received event.
